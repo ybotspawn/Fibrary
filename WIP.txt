@@ -1,0 +1,2 @@
+﻿https://sergeytihon.wordpress.com/2013/04/17/explore-local-network-with-f-async-workflows/
+https://msdn.microsoft.com/en-us/library/system.directoryservices.directorysearcher.aspx?cs-save-lang=1&cs-lang=csharp#code-snippet-1

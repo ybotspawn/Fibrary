@@ -1,0 +1,30 @@
+﻿//            let hosts =
+//                use searcher =
+//                    new DirectorySearcher(new DirectoryEntry(),
+//                        Filter="(objectClass=computer)", PageSize=50000)
+//                (searcher.FindAll() :> IEnumerable)
+//                |> Seq.cast<SearchResult>
+//                |> Seq.map (fun x -> x.GetDirectoryEntry().Name)
+//                |> Seq.map (fun n -> n.Substring(n.IndexOf("=")+1))
+//                |> Seq.toList
+
+
+// this expression is evaluated standalone
+            // consider the following, from http://fsharpforfunandprofit.com/posts/partial-application
+            // cant we write our own Domain Controller getdirectorysearcher?
+//            let result = 
+//                "hello"
+//                |> replace "h" "j"
+//                |> startswith "j" 
+
+
+//let seqCast : seq<DomainController> = Seq.cast dcs
+                //val seqCast : seq<DomainController>
+
+            //seqCast |> Seq.iter (fun dc -> printfn "DC: %s" dc.Name)
+                //DC: dios-dc1-01.dios-tech.com
+                //val it : unit = ()
+//            > Seq.cast dcs
+//            |> Seq.iter (fun (dc:DomainController) -> printfn "DomainController: %s" dc.Name);;
+//            DomainController: dios-dc1-01.dios-tech.com
+//            val it : unit = ()
