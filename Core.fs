@@ -9,3 +9,5 @@ module Core =
 
     let dateTimeFromInt64 ( bigInt : string) :DateTime =
         System.DateTime.FromFileTime(Int64.Parse(bigInt))
+    let dateTimetoString(dateTime: DateTime) :String = // Do extension keywords exist in F# so we can access this implictly?
+        "null"
