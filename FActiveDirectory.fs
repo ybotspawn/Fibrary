@@ -31,6 +31,21 @@ module FActiveDirectory =
         let __getIntProperty__(itemTest : string, anotherProperty: string) = 
             -1
        
+       let getObjectDomainControllerPropertyValue (dc: DomainController, idKey:string, idValue: string, propertyToLoad: string)= // could still generalize this weith custom callbacks
+        try
+            let searcher = new DirectorySearcher(new DirectoryEntry("LDAP://" + dc.Name), String.Format("(&({0}={1}))", idKey, idValue),[|propertyToLoad|])
+                //let user = new DirectoryEntry(value)
+            searcher.FindOne().Properties.Item(propertyToLoad).Item(0).ToString()
+        with
+            | :? System.ArgumentOutOfRangeException as aooRex -> String.Empty
+
+        let getLastLogon (dc: DomainController, samAccount: String) =
+            try
+                let searcher = new DirectorySearcher(new DirectoryEntry("LDAP://" + dc.Name), String.Format("(&(samAccountName={0}))", samAccount),[|"lastLogon"|])
+                //searcher.FindOne().Properties.Item("lastLogon").Item(0).ToString()
+                dateTimeFromInt64(searcher.FindOne().Properties.Item("lastLogon").Item(0).ToString()).ToString()
+            with
+                | :? System.ArgumentOutOfRangeException as aooRex -> DateTime.MinValue.ToString()
         
         let __getLastLogon__(samAccountName : string) =
             //http://fsharpforfunandprofit.com/posts/control-flow-expressions/
