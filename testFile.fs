@@ -1,13 +1,22 @@
 // testFile.fs
 
-//Get last Logons, synchronously
-let userSearcher = new DirectorySearcher(new DirectoryEntry("LDAP://OU=Company,dc=ricky,dc=bobby,dc=com"), String.Format("(&(objectClass=user))"))
+let main() = 
+    //Get last Logons, synchronously
+    let userSearcher = new DirectorySearcher(new DirectoryEntry("LDAP://OU=Company,dc=ricky,dc=bobby,dc=com"), String.Format("(&(objectCategory=person)(objectClass=user))"), PageSize=10000)
 
-// lame
-for sr in userSearcher.FindAll() do
-    let user = new DirectoryEntry(sr.Path)
-    printfn "%s" user.Name
-    for dc in getAllDomainControllers() do
-        printfn "\t%s: %s" dc.Name (getLastLogon (dc, user.Properties.["samAccountName"].Value.ToString()))
-printfn "Done."
-Console.Read() |> ignore
+    let start = DateTime.Now
+    let users = Seq.cast (userSearcher.FindAll() )
+    let userLastLogons = 
+        Async.Parallel [ for sr:SearchResult in users -> async { return (new DirectoryEntry(sr.Path), lastLogon(sr.Path)) } ]
+        |> Async.RunSynchronously
+
+    for user,lastLogon in userLastLogons do
+        let samAccount = user.Properties.["samAccountName"].Value.ToString()
+        let userLastLogon = lastLogon.ToString()
+        printfn "%s -> %s" samAccount userLastLogon
+    let total = DateTime.Now - start
+    let totalDateTime = total.ToString()
+    
+    printfn "Done in %s." totalDateTime
+    Console.Read() |> ignore
+main()
