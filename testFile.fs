@@ -1,7 +1,6 @@
 // testFile.fs
 
 let main() = 
-    //Get last Logons, synchronously
     let userSearcher = new DirectorySearcher(new DirectoryEntry("LDAP://OU=Company,dc=ricky,dc=bobby,dc=com"), String.Format("(&(objectCategory=person)(objectClass=user))"), PageSize=10000)
 
     let start = DateTime.Now
