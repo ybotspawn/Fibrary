@@ -1,6 +1,7 @@
 // testFile.fs
 
 let main() = 
+    // instead of spelling out the root directory entry below, people could simply pass the directoryentry from one of the results from getAllDomainControllers method in fActiveDirectory
     let userSearcher = new DirectorySearcher(new DirectoryEntry("LDAP://OU=Company,dc=ricky,dc=bobby,dc=com"), String.Format("(&(objectCategory=person)(objectClass=user))"), PageSize=10000)
 
     let start = DateTime.Now
