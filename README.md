@@ -18,3 +18,4 @@ get lastLogonTimeStamp
 get account Disabled
 get all domain controllers
 
+Many of these methods work in testing, I have not yet had the opportunity to integrate these into a tested functional library. Much saw dust and work to do
