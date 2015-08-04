@@ -1,6 +1,6 @@
 # Fibrary
 
-This project is an ongoing project to replace a legacy multifunction C# class library.
+This project is an ongoing F# project to replace a legacy multifunction C# class library.
 
 The preexisting C# library was specifically geared to the management of enterprise entities within an Active Directory environment.  This library is being designed to perform the same functions as well as contains the following other entity abstractions:
 
