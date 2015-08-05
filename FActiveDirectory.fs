@@ -13,7 +13,9 @@ module FActiveDirectory =
     type public FActiveDirectory() =
         // this should reference a static instance
         let fComputer = new FComputer()
-
+        
+        type AdsUserFlagsEnum = Script = 1 | AccountDisabled = 2 | HomeDirectoryRequired = 8 | AccountLockedOut = 16 | PasswordNotRequired = 32 | PasswordCannotChange = 64 | EncryptedTextPasswordAllowed = 128 | TempDuplicateAccount = 256 | NormalAccount = 512 | InterDomainTrustAccount = 2048 | WorkstationTrustAccount = 4096 | ServerTrustAccount = 8192 | PasswordDoesNotExpire = 65536 | MnsLogonAccount = 131072 | SmartCardRequired = 262144 | TrustedForDelegation = 524288 | AccountNotDelegated = 1048576 | UseDesKeyOnly = 2097152 | DontRequirePreauth = 4194304 | PasswordExpired = 8388608 | TrustedToAuthenticateForDelegation = 16777216 | NoAuthDataRequired = 33554432
+        
         // Private Construction Methods
         let getRootOrganizationUnit (domain : string) = // how do we want to handle subou overrides? let the implementer override by building their directoryentry directly
             // check a given value somewhere for the override value?
@@ -47,16 +49,6 @@ module FActiveDirectory =
         with
             | :? System.ArgumentOutOfRangeException as aooRex -> String.Empty
 
-        let __getDomainControllerSearchResult__ samAccount propertyToLoad (dc : DomainController)= //, samAccount : string, propertyToLoad: string) :string = 
-            let searcher = dc.GetDirectorySearcher()
-            searcher.Filter = String.Format("(&(samAccountName={0}))", samAccount) |> ignore
-            searcher.PropertiesToLoad.Add(propertyToLoad) |> ignore
-            searcher.SizeLimit = 1 |> ignore
-            let SR = searcher.FindOne()
-            SR.ToString()
-            //DateTime.FromFileTime(Int64.Parse(SR.Properties.Item( propertyToLoad).Item( 0 ).ToString())).ToString()
-            SR.Properties.Item(propertyToLoad).Item(0).ToString()
-
         let rec __getObjectBySAMAccount__ (samAccountName : string) = // fix this and make it an optional argument
             let searcher = new DirectorySearcher( getDomainRoot(false), String.Format("(sAMAccountName={0})", samAccountName))
             match searcher.FindOne() with
@@ -64,6 +56,18 @@ module FActiveDirectory =
             | _ -> searcher.FindOne().GetDirectoryEntry()
 
         // Public Construction
+        
+        let lastLogon (userPath:String, domainControllers: seq<DomainController>) = // pass in the seq<DomainController> collection to properly encapsulate this in the fActiveDirectory.fs
+            try
+                let user = new DirectoryEntry(userPath)
+                let samAccount = user.Properties.["samAccountName"].Value.ToString()
+                Console.Write("+")
+                List.sort [ for dc:DomainController in domainControllers -> getDomainControllerLastLogon(dc, samAccount) ]
+                    |> List.rev
+                    |> List.head
+            with 
+                | :? System.Runtime.InteropServices.COMException as commex -> DateTime.MinValue
+        
         member this.getAllDomainControllers () =
             let dcs = DomainController.FindAll(new DirectoryContext(DirectoryContextType.Domain, System.DirectoryServices.ActiveDirectory.Domain.GetCurrentDomain().Name)) 
             // get all dcs and do a ping to see whose online
@@ -71,6 +75,18 @@ module FActiveDirectory =
             |> Seq.filter (fun (dc:DomainController) -> fComputer.Pingable dc.Name )
 
         // Public Properties
+        let getAccountDisabled (de: DirectoryEntry) :bool=
+            let userFlags = de.Properties.["userAccountControl"].Value :?> AdsUserFlagsEnum
+            userFlags.HasFlag(AdsUserFlagsEnum.AccountDisabled)
+        let getLastLogonTimestamp (samAccount: String) =
+            try
+                let searcher = new DirectorySearcher(String.Format("(&(samAccountName={0}))", samAccount),[|"lastLogonTimestamp"|])
+                dateTimeFromInt64(searcher.FindOne().Properties.Item("lastLogonTimestamp").Item(0).ToString())
+            with
+                | :? System.ArgumentOutOfRangeException as aooRex -> DateTime.MinValue
+                | :? System.NullReferenceException as nRex -> DateTime.MinValue
+                | :? System.Runtime.InteropServices.COMException as commex -> DateTime.MinValue
+        
         member this.getObjectBySAMAccount (samAccountName : string) = 
             __getObjectBySAMAccount__ samAccountName
     
