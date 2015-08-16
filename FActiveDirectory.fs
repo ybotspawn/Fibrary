@@ -76,8 +76,35 @@ module FActiveDirectory =
 
         // Public Properties
         let getAccountDisabled (de: DirectoryEntry) :bool=
-            let userFlags = de.Properties.["userAccountControl"].Value :?> AdsUserFlagsEnum
-            userFlags.HasFlag(AdsUserFlagsEnum.AccountDisabled)
+            try
+                let userFlags = de.Properties.["userAccountControl"].Value :?> AdsUserFlagsEnum
+                userFlags.HasFlag(AdsUserFlagsEnum.AccountDisabled)
+            with
+                | :? System.DirectoryServices.DirectoryServicesCOMException as dsComEx -> false
+        let getCreationDate (samAccount: String) =
+            try
+                let searcher = new DirectorySearcher(String.Format("(&(samAccountName={0}))", samAccount),[|"whenCreated"|])
+                DateTime.Parse(searcher.FindOne().Properties.Item("whenCreated").Item(0).ToString())
+            with
+                | :? System.ArgumentOutOfRangeException as aooRex -> DateTime.MinValue
+                | :? System.NullReferenceException as nRex -> DateTime.MinValue
+                | :? System.Runtime.InteropServices.COMException as commex -> DateTime.MinValue
+        let getChangedDate (samAccount: String) =
+            try
+                let searcher = new DirectorySearcher(String.Format("(&(samAccountName={0}))", samAccount),[|"whenChanged"|])
+                DateTime.Parse(searcher.FindOne().Properties.Item("whenChanged").Item(0).ToString())
+            with
+                | :? System.ArgumentOutOfRangeException as aooRex -> DateTime.MinValue
+                | :? System.NullReferenceException as nRex -> DateTime.MinValue
+                | :? System.Runtime.InteropServices.COMException as commex -> DateTime.MinValue
+        let getExpirationDate (samAccount: String) =
+            try
+                let searcher = new DirectorySearcher(String.Format("(&(samAccountName={0}))", samAccount),[|"accountExpires"|])
+                dateTimeFromInt64(searcher.FindOne().Properties.Item("accountExpires").Item(0).ToString())
+            with
+                | :? System.ArgumentOutOfRangeException as aooRex -> DateTime.MinValue
+                | :? System.NullReferenceException as nRex -> DateTime.MinValue
+                | :? System.Runtime.InteropServices.COMException as commex -> DateTime.MinValue
         let getLastLogonTimestamp (samAccount: String) =
             try
                 let searcher = new DirectorySearcher(String.Format("(&(samAccountName={0}))", samAccount),[|"lastLogonTimestamp"|])
@@ -93,12 +120,13 @@ module FActiveDirectory =
         member this.userDisabled (user, ad) =            
             printfn "Return null"
 
-        member this.lastLogon (userPath:String) = 
-            let domainControllers = this.getAllDomainControllers()
-            let user = new DirectoryEntry(userPath)
-            let samAccount = user.Properties.["samAccountName"].Value.ToString()
-        
-            List.sort [ for dc:DomainController in domainControllers -> getDomainControllerLastLogon(dc, samAccount) ]
-                |> List.rev
-                |> List.head 
+        member this.lastLogon (userPath:String, domainControllers: seq<DomainController>) = 
+            try
+                let user = new DirectoryEntry(userPath)
+                let samAccount = user.Properties.["samAccountName"].Value.ToString()
+                List.sort [ for dc:DomainController in domainControllers -> getDomainControllerLastLogon(dc, samAccount) ]
+                    |> List.rev
+                    |> List.head
+            with
+                | :? System.Runtime.InteropServices.COMException as commex -> DateTime.MinValue
 
