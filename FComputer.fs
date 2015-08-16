@@ -1,4 +1,4 @@
-﻿namespace Fibrary
+namespace Fibrary
 
 open System.Net.NetworkInformation
 
@@ -11,4 +11,4 @@ module FComputer =
         member this.Pingable (computer : string) :bool=
             let p = new Ping()
             // this needs to have a try catch finally
-            if p.Send(computer).Status.Equals(IPStatus.Success) then true else false
+            p.Send(computer).Status.Equals(IPStatus.Success)
